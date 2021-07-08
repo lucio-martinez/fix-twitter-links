@@ -7,8 +7,12 @@ Tweet Pure Links is available as a Browser Extension via the following marketpla
 
 ### Create a release
 
-Run the `build.sh` to generate a `release.zip` file which will be uploaded into the marketplace.
+Run the [`build.sh`](build.sh) script to generate a `release.zip` file to upload into the marketplace.
 
 ### Versioning
 
-The `manifest.json` file declares the version with its `version` property.
+The [`manifest.json`](manifest.json) file declares the version of the browser extension in its `version` property.
+
+### Testing
+
+Run the [`build_unpacked.sh`](build_unpacked.sh) script to generate a `unpacked` directory containing an unpacked version that can be tested by loading it directly from the browser.

@@ -1,4 +1,5 @@
 .idea
 
-# Temporary files
+# Generated files
 browser-extension/release.zip
+browser-extension/unpacked

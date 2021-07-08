@@ -8,14 +8,16 @@
 // @updateURL   https://openuserjs.org/meta/lucio-martinez/Tweet_Pure_Links.meta.js
 // @supportURL  https://github.com/luciomartinez/tweet-pure-links/issues
 // @namespace   https://github.com/luciomartinez/tweet-pure-links
-// @version     2.0
+// @version     3.0
 // @grant       none
 // @match       https://twitter.com/*
-// @match       https://tweetdeck.twitter.com/*
 // @match       https://mobile.twitter.com/*
+// @match       https://tweetdeck.twitter.com/*
 // ==/UserScript==
 
 fixLinks();
+
+formatCopyLinkToTweet();
 
 function fixLinks() {
   const domain = window.location.hostname;
@@ -27,30 +29,34 @@ function fixLinks() {
 }
 
 function fixLinksInTwitter() {
-  startWatchWithCleaner(parseLinksAtTwitter);
+  startObservingWithCallback(parseLinksAtTwitter);
 }
 
 function fixLinksInTweetDeck() {
-  startWatchWithCleaner(parseLinksAtTweetDeck);
+  startObservingWithCallback(parseLinksAtTweetDeck);
 }
 
-function startWatchWithCleaner(cleaner) {
-  startWatch(cleaner);
-}
-
-function startWatch(cleaner) {
-  const watchedNode = document.getElementById('react-root');
-  watchForChangesOnNodeAndRunCleaner(watchedNode, cleaner);
-}
-
-function watchForChangesOnNodeAndRunCleaner(targetNode, cleaner) {
-  const observer = createObserverWithCallbackBounced(cleaner);
-  observer.observe(targetNode, { subtree: true, childList: true });
+function startObservingWithCallback(callback) {
+  const observer = createObserverWithCallbackBounced(callback);
+  configureObserver(observer);
 }
 
 function createObserverWithCallbackBounced(callback) {
   const callbackDebounced = debounce(callback);
-  return new MutationObserver(callbackDebounced);
+  return createObserver(callbackDebounced);
+}
+
+function createObserver(callback) {
+  return new MutationObserver(callback);
+}
+
+function configureObserver(observer) {
+  const observedNode = getNodeToObserve();
+  observer.observe(observedNode, { subtree: true, childList: true });
+}
+
+function getNodeToObserve() {
+  return document.getElementById('react-root');
 }
 
 /**
@@ -100,4 +106,71 @@ function setHrefTo(el, url) {
 
 function markAsFixed(el) {
   el.dataset.linkFixed = '1';
+}
+
+function formatCopyLinkToTweet() {
+  findShareTweetBtnsAndAttachListener().catch(() => console.error('Format Copy Link to Tweet failed unexpectedly.'));
+}
+
+async function findShareTweetBtnsAndAttachListener() {
+  const shareTweetBtns = await findShareTweetBtns();
+  attachListenersToShareTweetBtns(shareTweetBtns);
+}
+
+async function findShareTweetBtns() {
+  const SELECTOR_SHARE_TWEET_BTNS = '[aria-label="Share Tweet"]';
+  await waitFor(750);
+  return document.querySelectorAll(SELECTOR_SHARE_TWEET_BTNS);
+}
+
+function attachListenersToShareTweetBtns(shareTweetBtns) {
+  shareTweetBtns.forEach((btn) => {
+    btn.onclick = findCopyLinkToTweetBtnAndAttachListener;
+  });
+}
+
+async function findCopyLinkToTweetBtnAndAttachListener() {
+  const copyLinkToTweetBtn = await findCopyLinkToTweetBtn();
+  copyLinkToTweetBtn.onclick = formatLinkValueOnClipboard;
+}
+
+async function findCopyLinkToTweetBtn() {
+  const shareTweetOptions = await findShareTweetOptions();
+  return getCopyLinkToTweetBtnFromShareTweetOptions(shareTweetOptions);
+}
+
+async function findShareTweetOptions() {
+  const SELECTOR_SHARE_TWEET_OPTIONS = '[role="menuitem"]';
+  await waitFor(250);
+  return document.querySelectorAll(SELECTOR_SHARE_TWEET_OPTIONS);
+}
+
+function getCopyLinkToTweetBtnFromShareTweetOptions(shareTweetOptions) {
+  const ZERO_INDEX_BTN_COPY_LINK_TO_TWEET = 2;
+  return shareTweetOptions[ ZERO_INDEX_BTN_COPY_LINK_TO_TWEET ];
+}
+
+async function formatLinkValueOnClipboard() {
+  const originalLink = await getLinkValueFromClipboard();
+  const newLink = originalLink.replace('?s=20', '');
+  await saveValueOnClipboard(newLink);
+}
+
+async function getLinkValueFromClipboard() {
+  await waitFor(1);
+  return await navigator.clipboard.readText();
+}
+
+function saveValueOnClipboard(value) {
+  return navigator.clipboard.writeText(value);
+}
+
+/**
+ * Thanks to SLaks!
+ * https://stackoverflow.com/a/51200649/1505348
+ * @param delay Milliseconds
+ * @returns {Promise<void>}
+ */
+function waitFor(delay) {
+  return new Promise((resolve) => setTimeout(resolve, delay));
 }

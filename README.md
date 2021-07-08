@@ -23,7 +23,7 @@ The [source code](/user-script/tweet-pure-links.user.js) is fairly small so feel
 
 ## ✨ Icons
 
-Icons provided by [Icons8](https://icons8.com). See the [LICENSE](/icons/LICENSE) file.
+Icons provided by [Icons8](https://icons8.com). See the [icons/LICENSE](/icons/LICENSE) file.
 
 ## 📖 License
 
